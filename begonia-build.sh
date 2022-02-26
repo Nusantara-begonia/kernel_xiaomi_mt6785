@@ -17,17 +17,23 @@ else
     UT=0
 fi
 
-alias msg='curl -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
-            -d chat_id=$CHAT_ID \
-            -d disable_web_page_preview=true \
-            -d parse_mode=html'
+msg(){
+    curl -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
+    -d chat_id=$CHAT_ID \
+    -d parse_mode=html \
+    -d disable_web_page_preview=true \
+    -d text="$text"
+}
 
-alias upload='curl -F chat_id=$CHAT_ID \
-            -F document=@$FILE \
-            -F parse_mode=markdown https://api.telegram.org/bot$BOT_TOKEN/sendDocument'
+upload(){
+    curl -F parse_mode=markdown https://api.telegram.org/bot$BOT_TOKEN/sendDocument \
+    -F chat_id=$CHAT_ID \
+    -F document=@$FILE \
+    -F caption="$caption"
+}
 
 if [ $UT = 1 ]; then
-    msg -d text="Start to building Kernel"
+    text="Start to building Kernel" msg
 fi
 
 # Make zip
@@ -49,7 +55,7 @@ MakeZip(){
 
 # Clone Compiler
 if [ $UT = 1 ]; then
-    msg -d text="Clone Compiler . . ."
+    text="Clone Compiler . . ." msg
 fi
 if [ ! -d $Clang ]; then
     git clone --depth=1 https://github.com/TeraaBytee/google-clang -b 11.0.2 $Clang
@@ -97,7 +103,7 @@ Compiler=CLANG
 rm -rf out
 
 if [ $UT = 1 ]; then
-    msg -d text="
+    text="
 <b>Device</b>: <code>Redmi Note 8 Pro [BEGONIA]</code>
 <b>Branch</b>: <code>$Branch</code>
 <b>User</b>: <code>$KBUILD_BUILD_USER</code>
@@ -106,6 +112,7 @@ if [ $UT = 1 ]; then
 <b>Kernel version</b>: <code>$KERNEL_VERSION</code>
 <b>Compiler</b>:%0A<code>$ClangVersion</code>
 <b>Changelogs</b>:%0A<code>$Changelogs</code>"
+    msg
 fi
 
 TIME=$(date +"%d%m")
@@ -137,14 +144,14 @@ if [ -e $MainPath/out/arch/arm64/boot/Image.gz-dtb ]; then
     MakeZip
     if [ $UT = 1 ]; then
         FILE=$(echo *$Compiler*$HeadCommit.zip)
-        upload -F caption="Build success in: $BUILD_TIME"
+        caption="Build success in: $BUILD_TIME" upload
     else
         echo "Build success in: $BUILD_TIME"
     fi
 else
     if [ $UT = 1 ]; then
         FILE="out/error.log"
-        upload -F caption="Build fail in: $BUILD_TIME"
+        caption="Build fail in: $BUILD_TIME" upload
     else
         echo "Build fail in: $BUILD_TIME"
     fi
